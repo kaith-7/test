@@ -1,0 +1,515 @@
+<template>
+  <el-card class="main-card-container">
+    <div class="flex">
+      <!-- 树 -->
+      <el-tree
+        :highlight-current="true"
+        :data="data"
+        :props="defaultProps"
+        node-key="id"
+        :default-expanded-keys="[2]"
+        @node-click="handleNodeClick"
+      >
+      </el-tree>
+      <el-tabs v-model="activeName" @tab-click="handleClick">
+        <!-- 单位 -->
+
+        <el-tab-pane
+          :label="item.name"
+          :name="item.name"
+          v-for="(item, index) in messageContentArr"
+          :key="index"
+        >
+          <el-card
+            v-for="(messageType, index) in item.workingType"
+            :key="index"
+          >
+            <div class="siod"></div>
+            <span>{{ messageType }}消息推送</span>
+            <el-button
+              type="text"
+              style="float: right; padding: 3px 0"
+              @click="set"
+              >设置</el-button
+            >
+            <br />
+            <span class="span">当系统{{ messageType }}时，系统会默认通知上级主管（默认 一级主管），您也可以定义其他推送人
+            </span>
+            <el-switch
+              v-model="value"
+              active-color="#5285dc"
+              inactive-color="#c3c3c3"
+              active-text="已开启"
+            >
+            </el-switch>
+          </el-card>
+        </el-tab-pane>
+      </el-tabs>
+    </div>
+    <!-- 抽屉 -->
+    <el-drawer
+      class="drawer"
+      :title="title"
+      size="50%"
+      :visible.sync="drawer"
+      :direction="direction"
+      :before-close="handleClose"
+      append-to-body
+    >
+      <div class="box">
+        <el-form
+          :model="dynamicValidateForm"
+          ref="dynamicValidateForm"
+          label-width="150px"
+          class="demo-dynamic"
+          label-position="right"
+        >
+          <el-form-item label="负责人" :rules="[{ required: true }]">
+            <el-radio v-model="radio" label="1">推送</el-radio>
+            <el-radio v-model="radio" label="2">不推送 </el-radio>
+          </el-form-item>
+          <el-form-item label="协同人" :rules="[{ required: true }]">
+            <el-radio v-model="radio" label="1">推送</el-radio>
+            <el-radio v-model="radio" label="2">不推送 </el-radio>
+          </el-form-item>
+           <el-form-item label="移交人" :rules="[{ required: true }]" >
+            <el-radio v-model="radio" label="1">推送</el-radio>
+            <el-radio v-model="radio" label="2">不推送 </el-radio>
+          </el-form-item>
+          <!-- ----------------------------------------- -->
+          <el-form-item label="上级主管">
+            <el-input v-model="form.name"></el-input>
+          </el-form-item>
+          <el-form-item label="自定义推送人员">
+            <el-select v-model="form.region" placeholder="请选择">
+              <el-option label="区域一" value="shanghai"></el-option>
+              <el-option label="区域二" value="beijing"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item :label="label">
+            <el-select v-model="form.region" placeholder="请选择">
+              <el-option label="区域一" value="shanghai"></el-option>
+              <el-option label="区域二" value="beijing"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="推送部门">
+            <el-select v-model="form.region" placeholder="请选择">
+              <el-option label="区域一" value="shanghai"></el-option>
+              <el-option label="区域二" value="beijing"></el-option>
+            </el-select>
+          </el-form-item>
+          <!-- ----------------------------------------- -->
+          
+        </el-form>
+      </div>
+      <div class="footer">
+        <el-button type="primary" style="margin-right: 40px">确定</el-button>
+        <el-button @click="drawer = false">取消</el-button>
+      </div>
+    </el-drawer>
+  </el-card>
+</template>
+
+<script>
+export default {
+  name: "",
+  components: {},
+  props: {},
+  data() {
+    return {
+      title: "", //标题
+      activeName: "first",
+      messageContentArr: [
+        {
+          name: "单位",
+          workingType: [
+            "新建单位",
+            "删除单位",
+            "单位新建跟进录",
+            "单位新建客户",
+            "单位新建销售机会",
+            "单位添加协同人",
+            "单位删除协作人",
+          ],
+        },
+        {
+          name: "客户",
+          workingType: [
+            "客户新建消息",
+            "客户删除消息",
+            "客户移交负责人",
+            "客户新建跟进记录",
+            "客户新建日程",
+            "客户新建签到拜访",
+            "客户新建销售机会",
+            "客户新建使用反馈",
+            "客户添加删除协作人",
+          ],
+        },
+
+        {
+          name: "合作企业",
+          workingType: [
+            "合作企业新建消息推送",
+            "合作企业删除消息推送",
+            "合作企业移交负责人",
+            "合作企业新建跟进记录",
+            "合作企业新建客户",
+            "合作企业新建销售机会",
+            "合作企业添加删除协作人",
+          ],
+        },
+        {
+          name: "销售机会",
+          workingType: [
+            "销售机会新建消息推送",
+            "销售机会删除消息推送",
+            "销售机会新建跟进记录",
+            "销售机会新建日程",
+            "销售机会机会流失",
+            "销售机会添加删除协作人",
+          ],
+        },
+        {
+          name: "跟进记录",
+          workingType: [
+            "跟进记录新建消息推送",
+            "跟进记录评论跟进内容",
+            "跟进记录删除消息推送",
+          ],
+        },
+        {
+          name: "日报",
+          workingType: [
+            "新建日报消息推送",
+            "评论日报消息推送",
+            "点赞日报消息推送",
+          ],
+        },
+      ],
+      activeName: "单位",
+      value: true,
+      drawer: false,
+      direction: "rtl",
+      //表单
+      dynamicValidateForm: {
+        domains: [
+          {
+            value: "",
+          },
+        ],
+      },
+      radio: "1",
+      form: {
+        name: "",
+        region: "",
+      },
+      label: "推送角色", //推送部门/岗位
+      //树形结构
+      data: [
+        {
+          id: 1,
+          label: "西安三图信息科技有限公司",
+          children: [
+            {
+              id: 2,
+              label: "新疆三图（64）",
+              children: [
+                {
+                  label: "总经理",
+                },
+                {
+                  id: 3,
+                  label: "产品（30）",
+                  children: [
+                    { label: "部门主管(1)", icon: "el-icon-more" },
+                    {
+                      label: "分组1",
+                      children: [
+                        {
+                          label: "小组负责人",
+                        },
+                        {
+                          label: "成员",
+                        },
+                      ],
+                    },
+                    {
+                      label: "分组2",
+                      children: [
+                        {
+                          label: "成员",
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  label: "行政（4）",
+                },
+                {
+                  label: "研发（8）",
+                },
+              ],
+            },
+            {
+              id: 4,
+              label: "三图集思（5）",
+              icon: "el-icon-more",
+              children: [
+                {
+                  label: "产品（2）",
+                },
+                {
+                  label: "行政（3）",
+                },
+              ],
+            },
+            {
+              label: "积木科技（5）",
+              children: [
+                {
+                  label: "产品（2）",
+                },
+                {
+                  label: "行政（3）",
+                },
+              ],
+            },
+            {
+              label: "图灵普惠（15）",
+              children: [
+                {
+                  label: "产品（2）",
+                },
+                {
+                  label: "行政（4）",
+                },
+                {
+                  label: "研发（9）",
+                },
+              ],
+            },
+            {
+              label: "后勤管理服务中心（5）",
+              children: [
+                {
+                  label: "产品（2）",
+                },
+                {
+                  label: "行政（3）",
+                },
+              ],
+            },
+            {
+              label: "解决方案事业部（10）",
+              children: [
+                {
+                  label: "产品（2）",
+                },
+                {
+                  label: "行政（4）",
+                },
+                {
+                  label: "研发（4）",
+                },
+              ],
+            },
+            {
+              label: "西科微电子（3）",
+              children: [
+                {
+                  label: "产品（1）",
+                },
+                {
+                  label: "行政（1）",
+                },
+                {
+                  label: "研发（1）",
+                },
+              ],
+            },
+            {
+              label: "空间信息事业部（3）",
+              children: [
+                {
+                  label: "产品（1）",
+                },
+                {
+                  label: "行政（2）",
+                },
+                {
+                  label: "研发（1）",
+                },
+              ],
+            },
+            {
+              label: "新疆三图（14）",
+              children: [
+                {
+                  label: "产品（2）",
+                },
+                {
+                  label: "行政（4）",
+                },
+                {
+                  label: "研发（8）",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      defaultProps: {
+        children: "children",
+        label: "label",
+      },
+    }
+  },
+  computed: {},
+  watch: {},
+  created() {},
+  mounted() {},
+  methods: {
+    handleClick(tab, event) {
+      console.log(tab);
+      if (tab.index == 7) {
+        this.label = "推送岗位";
+      } else {
+        this.label = "推送角色";
+      }
+      // this.title = tab.props.label;
+      // console.log(tab.props);
+    },
+
+    // 关闭
+    handleClose(done) {
+      done() // 关闭抽屉
+    },
+    // 抽屉
+    set(title) {
+      this.drawer = true;
+      this.title = title;
+    },
+    handleNodeClick(data) {
+      console.log(data)
+    },
+  },
+}
+</script>
+
+<style scoped lang="less">
+.flex {
+  display: flex;
+}
+.el-tree {
+  padding: 0px 29px 0 36px;
+  margin-right: 58px;
+  background-color: #f8fafd;
+  color: #000000;
+  /deep/.el-tree-node__label {
+    font-size: 16px;
+  }
+}
+/deep/ .el-tree-node.is-current > .el-tree-node__content {
+  background-color: #edf3fc;
+  width: 257px;
+  // width: 257px;
+  padding: 10px;
+  margin-right: 58px;
+  background: #f8fafd;
+}
+.drawer {
+  font-size: 16px;
+  .box {
+    margin-top: 20px;
+    height: 772px;
+    background: #ffffff;
+    /deep/.el-form-item__label {
+      font-size: 18px;
+      font-family: Microsoft YaHei, Microsoft YaHei-Regular;
+      color: #000000;
+    }
+    /deep/.el-radio__label {
+      font-size: 18px;
+    }
+    /deep/.el-input__inner {
+      width: 440px;
+      height: 40px;
+      background: #ffffff;
+      border: 1px solid #dedede;
+      border-radius: 4px;
+    }
+  }
+  .footer {
+    width: 100%;
+    height: 84px;
+    background: #ffffff;
+    transform: translateY(1px);
+  }
+  .el-button {
+    float: right;
+    margin-right: 20px;
+    margin-top: 22px;
+  }
+}
+.main-card-container {
+  background: #fafafa;
+  border-radius: 20px;
+  /deep/.el-tabs__item {
+    font-size: 22px;
+  }
+  .siod {
+    width: 8px;
+    height: 310px;
+    background: #5285dc;
+    border-radius: 4px 0px 0px 4px;
+    float: left;
+    margin-left: -20px;
+    margin-top: -20px;
+    margin-right: 29px;
+  }
+  .el-switch {
+    position: absolute;
+    bottom: 30px;
+  }
+  .el-card {
+    position: relative;
+    float: left;
+    margin-right: 30px;
+    margin-top: 22px;
+    width: 30%;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0px 0px 6px 0px rgba(0, 0, 0, 0.16);
+    position: relative;
+    span {
+      font-size: 18px;
+      font-family: Microsoft YaHei, Microsoft YaHei-Bold;
+      font-weight: 700;
+      color: #0f0f0f;
+    }
+    .el-button--text {
+      font-size: 16px;
+    }
+    .span {
+      display: block;
+      font-size: 16px;
+      font-family: Microsoft YaHei, Microsoft YaHei-Regular;
+      margin-top: 19px;
+      color: #666666;
+      line-height: 28px;
+      letter-spacing: 0.4px;
+    }
+    /deep/.el-switch {
+      position: absolute;
+      bottom: 20px;
+      left: 49px;
+    }
+  }
+  /deep/.is-active {
+    font-weight: 700;
+    color: #000000;
+  }
+}
+</style>
